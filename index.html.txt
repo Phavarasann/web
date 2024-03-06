@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bluetooth Web App</title>
+</head>
+<body>
+  <button id="connectButton">Connect</button>
+  <div id="output"></div>
+
+  <script>
+    async function connect() {
+      try {
+        const device = await navigator.bluetooth.requestDevice({
+          filters: [{ services: [0xFFE0] }] // Replace with your ESP32 service UUID
+        });
+        const server = await device.gatt.connect();
+        const service = await server.getPrimaryService(0xFFE0); // Replace with your ESP32 service UUID
+        const characteristic = await service.getCharacteristic(0xFFE1); // Replace with your ESP32 characteristic UUID
+
+        characteristic.addEventListener('characteristicvaluechanged', (event) => {
+          const value = event.target.value;
+          const textDecoder = new TextDecoder();
+          const receivedString = textDecoder.decode(value);
+          document.getElementById('output').innerText = receivedString;
+        });
+
+        await characteristic.startNotifications();
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }
+
+    document.getElementById('connectButton').addEventListener('click', connect);
+  </script>
+</body>
+</html>
